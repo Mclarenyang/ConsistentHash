@@ -8,14 +8,17 @@
 
 /* Begin PBXBuildFile section */
 		434F418B21D0A8FC00544D79 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 434F418A21D0A8FC00544D79 /* main.swift */; };
+		43B3DE2321D0AB42009E387E /* node_virtual.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B3DE2021D0AB42009E387E /* node_virtual.swift */; };
+		43B3DE2421D0AB42009E387E /* ring.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B3DE2121D0AB42009E387E /* ring.swift */; };
+		43B3DE2521D0AB42009E387E /* node.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43B3DE2221D0AB42009E387E /* node.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		434F418521D0A8FC00544D79 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
-			dstPath = /usr/share/man/man1/;
-			dstSubfolderSpec = 0;
+			dstPath = usr/share/man/man1;
+			dstSubfolderSpec = 10;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 1;
@@ -25,6 +28,9 @@
 /* Begin PBXFileReference section */
 		434F418721D0A8FC00544D79 /* ConsistentHash */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ConsistentHash; sourceTree = BUILT_PRODUCTS_DIR; };
 		434F418A21D0A8FC00544D79 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		43B3DE2021D0AB42009E387E /* node_virtual.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = node_virtual.swift; sourceTree = "<group>"; };
+		43B3DE2121D0AB42009E387E /* ring.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ring.swift; sourceTree = "<group>"; };
+		43B3DE2221D0AB42009E387E /* node.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = node.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,6 +64,9 @@
 			isa = PBXGroup;
 			children = (
 				434F418A21D0A8FC00544D79 /* main.swift */,
+				43B3DE2121D0AB42009E387E /* ring.swift */,
+				43B3DE2221D0AB42009E387E /* node.swift */,
+				43B3DE2021D0AB42009E387E /* node_virtual.swift */,
 			);
 			path = ConsistentHash;
 			sourceTree = "<group>";
@@ -120,6 +129,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				434F418B21D0A8FC00544D79 /* main.swift in Sources */,
+				43B3DE2421D0AB42009E387E /* ring.swift in Sources */,
+				43B3DE2321D0AB42009E387E /* node_virtual.swift in Sources */,
+				43B3DE2521D0AB42009E387E /* node.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -246,6 +258,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4T9R7Y2CG4;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ConsistentHash",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
 			};
@@ -256,6 +272,10 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4T9R7Y2CG4;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ConsistentHash",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 4.2;
 			};
