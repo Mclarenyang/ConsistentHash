@@ -14,6 +14,8 @@ class SuperNode {
     public var nodeNum = 0
     //节点名称
     public var nodeName = ""
+    //chord指针表
+    public var finger = [Int]()
     //网络层
     var ring: Ring!
     
@@ -36,58 +38,58 @@ class Node: SuperNode{
     private var storage = [data]()
     //投射的虚拟节点
     public var virtualNode = [Int]()
-    //chord指针表
-    public var finger = [Int]()
+    //本次提交查找的数据key
+    private var key = ""
+    private var timer = Timer()
     
     //寻找节点--插入数据 --> 重写存储逻辑
     override func insertData(key: String , value: String) -> Int {
         let hashKey = key.consistentHash()
         //数据应该存储在本节点上
-        if hashKey <= self.nodeNum && hashKey > finger[0]{
-            print(insert(key: key, value: value, nodeNum: self.nodeNum))
+        if hashKey <= self.nodeNum && hashKey > finger[0] || self.key == key{
+            _ = insert(key: key, value: value, nodeNum: self.nodeNum)
             return 0
         }
         //数据存储超出finger的范围
         if hashKey > finger[finger.count-1]{
+            refreshTimer(key: key)
             ring.insert(key: key, value: value, nodeName: "", nodeNum: finger.last!, isFromVirtualNode: false)
             return 0
         }
         //数据应该存储在finger表中的节点上
         for index in (0..<finger.count-1).reversed(){
             if hashKey < finger[index]{
+                //self.key = key
                 ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false)
             }
         }
+        refreshTimer(key: key)
         return -1
     }
     
     //查找k下的v--打印&删除
     override func queryDataPD(key: String, hashKey: Int , isDelete: Bool) -> (Int,Bool) {
-        if hashKey <= self.nodeNum && hashKey > finger[0]{
-            for index in 0..<storage.count{
-                let dataItem = storage[index]
-                if dataItem.key == key{
-                    print(dataItem)
-                    if isDelete{
-                        storage.remove(at: index)
-                    }
-                    return (nodeNum,true)
-                }
-            }
+        print("\(nodeName)+\(key)")
+        if query(key: key, hashKey: hashKey, isDelete: isDelete) {return(0,true)}
+        if key == self.key{
+            print("没有找到数据🤷‍♂️，k:\(key),\(nodeName)")
+            return (-1,false)
         }
         
         let hashKey = key.consistentHash()
         if hashKey > finger[finger.count-1]{
+            self.key = key
             ring.queryDataPD(key: key, nodeName: "", hashKey: finger.last!, isDelete: isDelete)
             return (0,true)
         }
+        
         for index in (0..<finger.count-1).reversed(){
             if hashKey < finger[index]{
+                self.key = key
                 ring.queryDataPD(key: key, nodeName: "", hashKey: finger[index], isDelete: isDelete)
                 return (0,true)
             }
         }
-        print("没有找到数据🤷‍♂️，k:\(key)")
         return (-1,false)
     }
     
@@ -111,7 +113,36 @@ class Node: SuperNode{
     func insert(key: String, value: String, nodeNum: Int) -> Bool{
         let dataItem = data(key: key, value: value, nodeNum: nodeNum)
         storage.append(dataItem)
+        print("存储节点：\(nodeName)，k-v:\(key)-\(value)")
+        self.key = String(Int(arc4random()))
         return true
+    }
+    
+    //本地查找
+    func query(key: String, hashKey: Int , isDelete: Bool) -> Bool{
+        for index in 0..<storage.count{
+            let dataItem = storage[index]
+            if dataItem.key == key{
+                print(dataItem)
+                if isDelete{
+                    storage.remove(at: index)
+                    print("数据删除->key:\(key)")
+                }
+                self.key = String(Int(arc4random()))
+                return true
+            }
+        }
+        return false
+    }
+    
+    //计时器刷新
+    func refreshTimer(key: String) {
+        self.timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false, block: {
+            _ in
+            self.key = String(Int(arc4random()))
+        })
+        self.key = key
+        timer.fire()
     }
     
     //涉及节点删除后的数据重新分配

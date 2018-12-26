@@ -11,8 +11,14 @@ import CommonCrypto
 
 class Ring {
     
+    static let shared = Ring()
+    private init(){}
+    
     //哈希环
     public var ring = [SuperNode]()
+    
+    //哈希环的大小，2的power幂
+    public var power = 0
     
     //-----用户接口-----//
     //添加真实节点
@@ -22,7 +28,7 @@ class Ring {
         let newNode = Node()
         newNode.nodeName = nodeName
         newNode.nodeNum = nodeHash
-        newNode.ring = self
+        newNode.ring = Ring.shared
         
         if ring.count == 0{
             ring.append(newNode)
@@ -33,6 +39,7 @@ class Ring {
             if nodeHash <= ring[index].nodeNum ||
                 index+1 == ring.count{
                 ring.insert(newNode, at: index)
+                refreshFinger()
                 return nodeHash
             }
         }
@@ -52,8 +59,9 @@ class Ring {
                     //删除真实节点连接的所有虚拟节点
                     deleteAllVirtualNodeforRealNode(realNode: realNode)
                     _ = (ring[index] as! Node).popData(nodeNum: nodeName.consistentHash())
-                    //todo--更新node指针表
+                    
                     ring.remove(at: index)
+                    refreshFinger()
                     return true
                 }else{
                     //告诉真实节点它的虚拟节点被删除了
@@ -64,7 +72,7 @@ class Ring {
                         }
                     }
                     ring.remove(at: index)
-                    //todo--更新node指针表
+                    refreshFinger()
                     return true
                 }
             }
@@ -91,12 +99,12 @@ class Ring {
         if ring.isEmpty {
             print("当前没有节点")
         }else{
-            var nodeStr = "👉"
+            var nodeStr = "⭕️"
             for node in ring{
                 nodeStr += node.nodeName
                 nodeStr += "->"
             }
-            nodeStr += "🙌"
+            nodeStr += "⭕️"
             print(nodeStr)
         }
     }
@@ -127,7 +135,49 @@ class Ring {
     //-----网络层-----//
     //更新finger指针
     func refreshFinger() {
-        //todo
+        //如果当前只有一个节点
+        if ring.count == 1{return}
+        
+        for index in 0..<ring.count{
+            var finger = [Int]()
+            //先将前驱加入
+            if index-1 < 0 {
+                finger.append((ring.last?.nodeNum)!)
+            }else{
+                finger.append(ring[index-1].nodeNum)
+            }
+            
+            //如果现在的节点数小于幂的量-->没有必要建立跳跃的指针表
+            if ring.count+1 <= power{
+                for count in 0..<ring.count{
+                    if count+index > ring.count-1{
+                        let i = count + index - ring.count
+                        finger.append(ring[i].nodeNum)
+                    }else{
+                        finger.append(ring[count+index].nodeNum)
+                    }
+                }
+                ring[index].finger.removeAll()
+                ring[index].finger = finger
+                continue
+            }
+            
+            let nowNodeNum = ring[index].nodeNum
+            for row in 0..<power{
+                var 🎯 = nowNodeNum + (1<<row)
+                if 🎯 > (ring.last?.nodeNum)!{
+                    🎯 = 🎯 - 1<<power
+                }
+                for j in 0..<ring.count{
+                    if ring[j].nodeNum > 🎯{
+                        finger.append(ring[j].nodeNum)
+                    }
+                }
+            }
+            
+            ring[index].finger.removeAll()
+            ring[index].finger = finger
+        }
     }
     
     //data_数据插入，兼容用户接口
@@ -136,18 +186,26 @@ class Ring {
             if node.nodeName == nodeName || node.nodeNum == nodeNum{
                 if isFromVirtualNode{
                     print((node as! Node).insert(key: key, value: value, nodeNum: nodeNum))
+                    return
                 }else{
                     _ = node.insertData(key: key, value: value)
+                    return
                 }
             }
         }
+        print("没有找到你请求的节点🤨")
     }
     
     //data_数据查找--删除，兼容用户接口
     func queryDataPD(key: String, nodeName: String, hashKey: Int, isDelete: Bool){
         for index in 0..<ring.count {
-            if ring[index].nodeName == nodeName || ring[index].nodeNum >= hashKey {
+            guard ring[index].nodeName != nodeName else{
                 _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete)
+                return
+            }
+            guard ring[index].nodeNum < hashKey || hashKey != -1 else{
+                _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete)
+                return
             }
         }
     }

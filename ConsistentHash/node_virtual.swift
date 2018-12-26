@@ -12,8 +12,6 @@ class Node_Virtual: SuperNode{
     
     //所属于的真实节点hash值
     public var realNodeNum = 0
-    //chord指针表
-    private var finger = [Int]()
     
     //寻找节点--插入数据
     override func insertData(key: String , value: String) -> Int {
