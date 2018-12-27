@@ -18,9 +18,11 @@ class SuperNode {
     public var finger = [Int]()
     //网络层
     var ring: Ring!
+    //请求标识符
+    var requestID = ""
     
-    func insertData(key: String , value: String) -> Int {return 2}
-    func queryDataPD(key: String, hashKey: Int, isDelete: Bool) -> (Int,Bool) {return (2,true)}
+    func insertData(key: String , value: String, requestID: String) -> Int {return 2}
+    func queryDataPD(key: String, hashKey: Int, isDelete: Bool, requestID: String) -> (Int,Bool) {return (2,true)}
     
 }
 
@@ -38,55 +40,59 @@ class Node: SuperNode{
     private var storage = [data]()
     //投射的虚拟节点
     public var virtualNode = [Int]()
-    //本次提交查找的数据key
-    private var key = ""
+    //真实节点即将被删除
+    private var ifWillBeDelete = false
     private var timer = Timer()
     
-    //寻找节点--插入数据 --> 重写存储逻辑
-    override func insertData(key: String , value: String) -> Int {
+    //寻找节点--插入数据
+    override func insertData(key: String , value: String, requestID: String) -> Int {
+        //如果节点将要被删除，那么第二次到达时直接投递
+        if self.ifWillBeDelete {
+            ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[2], isFromVirtualNode: false, requestID: requestID)
+            return 0
+        }
         let hashKey = key.consistentHash()
         //数据应该存储在本节点上
-        if hashKey <= self.nodeNum && hashKey > finger[0] || self.key == key{
+        if hashKey <= self.nodeNum && hashKey > finger[0] || self.requestID == requestID{
             _ = insert(key: key, value: value, nodeNum: self.nodeNum)
             return 0
         }
         //数据存储超出finger的范围
         if hashKey > finger[finger.count-1]{
-            refreshTimer(key: key)
-            ring.insert(key: key, value: value, nodeName: "", nodeNum: finger.last!, isFromVirtualNode: false)
+            self.requestID = requestID
+            ring.insert(key: key, value: value, nodeName: "", nodeNum: finger.last!, isFromVirtualNode: false, requestID: requestID)
             return 0
         }
         //数据应该存储在finger表中的节点上
         for index in (0..<finger.count-1).reversed(){
-            if hashKey < finger[index]{
-                //self.key = key
-                ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false)
+            if hashKey <= finger[index]{
+                self.requestID = requestID
+                ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false, requestID: requestID)
             }
         }
-        refreshTimer(key: key)
         return -1
     }
     
     //查找k下的v--打印&删除
-    override func queryDataPD(key: String, hashKey: Int , isDelete: Bool) -> (Int,Bool) {
-        print("\(nodeName)+\(key)")
+    override func queryDataPD(key: String, hashKey: Int , isDelete: Bool, requestID: String) -> (Int,Bool) {
+        //NSLog("\(nodeName)+\(key)")
         if query(key: key, hashKey: hashKey, isDelete: isDelete) {return(0,true)}
-        if key == self.key{
+        if requestID == self.requestID{
             print("没有找到数据🤷‍♂️，k:\(key),\(nodeName)")
             return (-1,false)
         }
         
         let hashKey = key.consistentHash()
         if hashKey > finger[finger.count-1]{
-            self.key = key
-            ring.queryDataPD(key: key, nodeName: "", hashKey: finger.last!, isDelete: isDelete)
+            self.requestID = requestID
+            ring.queryDataPD(key: key, nodeName: "", hashKey: finger.last!, isDelete: isDelete, requestID: requestID)
             return (0,true)
         }
         
         for index in (0..<finger.count-1).reversed(){
             if hashKey < finger[index]{
-                self.key = key
-                ring.queryDataPD(key: key, nodeName: "", hashKey: finger[index], isDelete: isDelete)
+                self.requestID = requestID
+                ring.queryDataPD(key: key, nodeName: "", hashKey: finger[index], isDelete: isDelete, requestID: requestID)
                 return (0,true)
             }
         }
@@ -113,8 +119,8 @@ class Node: SuperNode{
     func insert(key: String, value: String, nodeNum: Int) -> Bool{
         let dataItem = data(key: key, value: value, nodeNum: nodeNum)
         storage.append(dataItem)
-        print("存储节点：\(nodeName)，k-v:\(key)-\(value)")
-        self.key = String(Int(arc4random()))
+        print("数据存储->k-v:\(key)-\(value),in: \(nodeName)")
+        self.requestID = String(Int(arc4random()))
         return true
     }
     
@@ -123,12 +129,13 @@ class Node: SuperNode{
         for index in 0..<storage.count{
             let dataItem = storage[index]
             if dataItem.key == key{
-                print(dataItem)
                 if isDelete{
                     storage.remove(at: index)
-                    print("数据删除->key:\(key)")
+                    print("数据删除->key:\(key),from: \(nodeName)")
+                }else{
+                    print("\(dataItem),in: \(nodeName)")
                 }
-                self.key = String(Int(arc4random()))
+                self.requestID = String(Int(arc4random()))
                 return true
             }
         }
@@ -136,13 +143,28 @@ class Node: SuperNode{
     }
     
     //计时器刷新
-    func refreshTimer(key: String) {
-        self.timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: false, block: {
-            _ in
-            self.key = String(Int(arc4random()))
-        })
-        self.key = key
-        timer.fire()
+    func freeRequest(key: String) {
+        
+        self.requestID = key
+        //self.key = String(Int(arc4random()))
+        let queue = DispatchQueue(label: "consistentHash.mclarenyang", attributes: .concurrent)
+        queue.async {
+            sleep(1)
+            self.requestID = String(Int(arc4random()))
+        }
+        sleep(2)
+        
+//        var timerCount = 0
+//        self.timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: {
+//            _ in
+//            print(timerCount)
+//            timerCount += 1
+//            if timerCount == 2{
+//                self.key = String(Int(arc4random()))
+//                self.timer.invalidate()
+//            }
+//        })
+//        timer.fire()
     }
     
     //涉及节点删除后的数据重新分配
@@ -151,10 +173,14 @@ class Node: SuperNode{
             print("最后一个节点删除，所有数据丢失👋")
             return
         }
+        
+        //
+        self.ifWillBeDelete = true
+        
         if nodeNum == self.nodeNum{
             //分发所有数据
             for dataItem in storage{
-                ring.insert(key: dataItem.key, value: dataItem.value, nodeName: "", nodeNum: finger[1], isFromVirtualNode: false)
+                ring.insert(key: dataItem.key, value: dataItem.value, nodeName: "", nodeNum: finger[2], isFromVirtualNode: false, requestID: "")
             }
             //删除所有虚拟节点
             self.virtualNode.removeAll()
@@ -162,7 +188,7 @@ class Node: SuperNode{
             //分发数据
             for dataItem in storage{
                 if dataItem.nodeNum == nodeNum{
-                    ring.insert(key: dataItem.key, value: dataItem.value, nodeName: "", nodeNum: finger[1], isFromVirtualNode: false)
+                    ring.insert(key: dataItem.key, value: dataItem.value, nodeName: "", nodeNum: finger[2], isFromVirtualNode: false, requestID: String(Int(arc4random())))
                 }
             }
             //删除这个虚拟节点

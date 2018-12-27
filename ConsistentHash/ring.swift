@@ -58,9 +58,10 @@ class Ring {
                     let realNode = ring[index] as! Node
                     //删除真实节点连接的所有虚拟节点
                     deleteAllVirtualNodeforRealNode(realNode: realNode)
-                    _ = (ring[index] as! Node).popData(nodeNum: nodeName.consistentHash())
+                    _ = realNode.popData(nodeNum: nodeName.consistentHash())
                     
                     ring.remove(at: index)
+                    print("删除节点成功:\(nodeName)")
                     refreshFinger()
                     return true
                 }else{
@@ -181,30 +182,44 @@ class Ring {
     }
     
     //data_数据插入，兼容用户接口
-    func insert(key: String , value: String, nodeName: String, nodeNum:Int, isFromVirtualNode: Bool){
+    func insert(key: String , value: String, nodeName: String, nodeNum:Int, isFromVirtualNode: Bool, requestID: String){
+        var nowRequestID = requestID
+        if requestID == "" {
+            nowRequestID = String(Int(arc4random()))
+        }
         for node in ring {
             if node.nodeName == nodeName || node.nodeNum == nodeNum{
                 if isFromVirtualNode{
                     print((node as! Node).insert(key: key, value: value, nodeNum: nodeNum))
                     return
                 }else{
-                    _ = node.insertData(key: key, value: value)
+                    _ = node.insertData(key: key, value: value, requestID: nowRequestID)
                     return
                 }
             }
         }
-        print("没有找到你请求的节点🤨")
+        print("没有找到你请求的节点🤨-nodeName:\(nodeName) nodeNum:\(nodeNum)")
     }
     
     //data_数据查找--删除，兼容用户接口
-    func queryDataPD(key: String, nodeName: String, hashKey: Int, isDelete: Bool){
+    func queryDataPD(key: String, nodeName: String, hashKey: Int, isDelete: Bool, requestID: String){
+        var nowRequestID = requestID
+        if requestID == "" {
+            nowRequestID = String(Int(arc4random()))
+        }
         for index in 0..<ring.count {
-            guard ring[index].nodeName != nodeName else{
-                _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete)
+            //命名优先
+            if ring[index].nodeName != nodeName && hashKey < 0 {
+                continue
+            }
+            
+            if ring[index].nodeName == nodeName {
+                _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete, requestID: nowRequestID)
                 return
             }
-            guard ring[index].nodeNum < hashKey || hashKey != -1 else{
-                _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete)
+            
+            if ring[index].nodeNum == hashKey && hashKey > 0{
+                _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete, requestID: nowRequestID)
                 return
             }
         }
