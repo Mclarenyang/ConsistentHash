@@ -15,7 +15,7 @@ class Ring {
     private init(){}
     
     //哈希环
-    public var ring = [SuperNode]()
+    private var ring = [SuperNode]()
     
     //哈希环的大小，2的power幂
     public var power = 0
@@ -68,7 +68,7 @@ class Ring {
                     //告诉真实节点它的虚拟节点被删除了
                     let realNodeNum = (ring[index] as! Node_Virtual).realNodeNum
                     for realNode in ring{
-                        if realNodeNum == (realNode as! Node).nodeNum{
+                        if realNodeNum == realNode.nodeNum{
                             _ = (realNode as! Node).popData(nodeNum: nodeName.consistentHash())
                         }
                     }
@@ -94,6 +94,50 @@ class Ring {
     
     //负载均衡 -> 自动添加虚拟节点
     //todo
+    func rebBalance() {
+        /*
+         * 1 找出存储最多的节点及存储最少的节点
+         * 2 找出最大存储量节点的数据hash中间值
+         * 3 new一个虚拟节点将hash值设置为中间值 名称为virtual（num）
+         * 4 将虚拟节点链接到存储最小的真实节点上
+         * 5 触发更新指针表/触发数据重新分配
+         */
+        
+        var max = (0,Node())
+        var min = (1<<32,Node())
+        var maxNodeIndex = 0
+        //1
+        for index in 0..<ring.count{
+            //a.hasPrefix("Hel")
+            if ring[index].nodeName.hasPrefix("virtual"){continue}
+            let realNode = ring[index] as! Node
+            if max.0 < realNode.storageCount{
+                max = (realNode.storageCount, realNode)
+                maxNodeIndex = index
+                
+            }
+            if min.0 > realNode.storageCount{
+                min = (realNode.storageCount, realNode)
+            }
+        }
+        if min.0 == max.0 || min.1.nodeNum == max.1.nodeNum{
+            return
+        }
+        //2
+        let middleHash = max.1.middleValueHash
+        //3
+        let virtualNode = Node_Virtual()
+        virtualNode.nodeNum = middleHash
+        virtualNode.nodeName = "virtual-" + min.1.nodeName
+        //4
+        virtualNode.realNodeNum = min.1.nodeNum
+        virtualNode.ring = self
+        min.1.virtualNode.append(virtualNode.nodeNum)
+        ring.insert(virtualNode, at: maxNodeIndex)
+        //5
+        refreshFinger()
+        max.1.popRedundantData(VirtualNodeNum: virtualNode.nodeNum)
+    }
     
     //打印现在的节点状态
     func printNode() {
@@ -135,7 +179,7 @@ class Ring {
     
     //-----网络层-----//
     //更新finger指针
-    func refreshFinger() {
+    private func refreshFinger() {
         //如果当前只有一个节点
         if ring.count == 1{return}
         

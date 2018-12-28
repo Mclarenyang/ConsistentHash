@@ -37,11 +37,20 @@ struct data {
 class Node: SuperNode{
     
     //节点存储的数据 -> (k,v,nodeNum)
-    private var storage = [data]()
+    private var storage = [data](){
+        didSet{
+            self.storageCount = storage.count
+            self.middleValueHash = storage[Int(storageCount/2)].key.consistentHash()
+        }
+    }
+
+    public var storageCount = 0
+    public var middleValueHash = 0
     //投射的虚拟节点
     public var virtualNode = [Int]()
     //真实节点即将被删除
     private var ifWillBeDelete = false
+    
     private var timer = Timer()
     
     //寻找节点--插入数据
@@ -146,7 +155,6 @@ class Node: SuperNode{
     func freeRequest(key: String) {
         
         self.requestID = key
-        //self.key = String(Int(arc4random()))
         let queue = DispatchQueue(label: "consistentHash.mclarenyang", attributes: .concurrent)
         queue.async {
             sleep(1)
@@ -200,4 +208,11 @@ class Node: SuperNode{
         }
     }
     
+    //refresh后的数据更新
+    func popRedundantData(VirtualNodeNum: Int){
+        for index in Int(storageCount/2)..<storageCount{
+            let dataItem = storage[index]
+            ring.insert(key: dataItem.key, value: dataItem.value, nodeName:"", nodeNum: VirtualNodeNum, isFromVirtualNode: false, requestID: String(Int(arc4random())))
+        }
+    }
 }

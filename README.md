@@ -12,5 +12,5 @@ Chord consistent hashing ring by Swift 4.2
 
 ## 2 To Do
 ---
-- [ ] 实现带虚拟节点的版本
+- [x] 实现带虚拟节点的版本
 - [ ] 实现节点多线程任务

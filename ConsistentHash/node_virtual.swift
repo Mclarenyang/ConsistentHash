@@ -14,22 +14,23 @@ class Node_Virtual: SuperNode{
     public var realNodeNum = 0
     
     //寻找节点--插入数据
-    
     override func insertData(key: String, value: String, requestID: String) -> Int {
         let hashKey = key.consistentHash()
         //数据应该存储在本节点上
-        if hashKey <= self.nodeNum && hashKey > finger[0]{
+        if hashKey <= self.nodeNum && hashKey > finger[0] || self.requestID == requestID{
             ring.insert(key: key, value: value, nodeName: "", nodeNum: realNodeNum, isFromVirtualNode: true, requestID: requestID)
             return 0
         }
         //数据存储超出finger的范围
         if hashKey > finger[finger.count-1]{
+            self.requestID = requestID
             ring.insert(key: key, value: value, nodeName: "", nodeNum: finger.last!, isFromVirtualNode: false, requestID: requestID)
             return 0
         }
         //数据应该存储在finger表中的节点上
         for index in (0..<finger.count-1).reversed(){
-            if hashKey < finger[index]{
+            if hashKey <= finger[index]{
+                self.requestID = requestID
                 ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false, requestID: requestID)
             }
         }
@@ -46,11 +47,14 @@ class Node_Virtual: SuperNode{
         
         let hashKey = key.consistentHash()
         if hashKey > finger[finger.count-1]{
+            self.requestID = requestID
             ring.queryDataPD(key: key, nodeName: "", hashKey: finger.last!, isDelete: isDelete, requestID: requestID)
             return (0,true)
         }
+        
         for index in (0..<finger.count-1).reversed(){
             if hashKey < finger[index]{
+                self.requestID = requestID
                 ring.queryDataPD(key: key, nodeName: "", hashKey: finger[index], isDelete: isDelete, requestID: requestID)
                 return (0,true)
             }
