@@ -14,3 +14,4 @@ Chord consistent hashing ring by Swift 4.2
 ---
 - [x] 实现带虚拟节点的版本
 - [ ] 实现节点多线程任务
+- [ ] 指针表( 路由表 )的路由算法应该有点问题

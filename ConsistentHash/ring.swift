@@ -287,7 +287,7 @@ extension String {
         for index in 0..<4{
             let indexHead = hashValue.index(hashValue.startIndex, offsetBy: index * 4)
             let indexBottom = hashValue.index(hashValue.startIndex, offsetBy: index * 4 + 8)
-            hashResult |= Int(hashValue[indexHead..<indexBottom], radix: 16)!
+            hashResult += Int(hashValue[indexHead..<indexBottom], radix: 16)! % (1<<32 / 4)
         }
         return hashResult
     }

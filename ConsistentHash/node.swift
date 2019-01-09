@@ -40,7 +40,9 @@ class Node: SuperNode{
     private var storage = [data](){
         didSet{
             self.storageCount = storage.count
-            self.middleValueHash = storage[Int(storageCount/2)].key.consistentHash()
+            if middleValueHash >= 0{
+                self.middleValueHash = storage[Int(storageCount/2)].key.consistentHash()
+            }
         }
     }
 
