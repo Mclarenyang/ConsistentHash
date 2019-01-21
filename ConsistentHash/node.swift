@@ -15,7 +15,12 @@ class SuperNode {
     //节点名称
     public var nodeName = ""
     //chord指针表
-    public var finger = [Int]()
+    public var finger = [Int](){
+        didSet{
+            //排序
+            self.finger = finger.sorted(by: <)
+        }
+    }
     //网络层
     var ring: Ring!
     //请求标识符
@@ -59,26 +64,34 @@ class Node: SuperNode{
     override func insertData(key: String , value: String, requestID: String) -> Int {
         //如果节点将要被删除，那么第二次到达时直接投递
         if self.ifWillBeDelete {
-            ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[2], isFromVirtualNode: false, requestID: requestID)
+            ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[Int(arc4random()) % finger.count], isFromVirtualNode: false, requestID: requestID)
             return 0
         }
         let hashKey = key.consistentHash()
+        
         //数据应该存储在本节点上
-        if hashKey <= self.nodeNum && hashKey > finger[0] || self.requestID == requestID{
+        if self.requestID == requestID{
             _ = insert(key: key, value: value, nodeNum: self.nodeNum)
             return 0
         }
+        
         //数据存储超出finger的范围
-        if hashKey > finger[finger.count-1]{
+        if hashKey > finger[finger.count-1] || hashKey < finger[0]{
             self.requestID = requestID
             ring.insert(key: key, value: value, nodeName: "", nodeNum: finger.last!, isFromVirtualNode: false, requestID: requestID)
             return 0
         }
-        //数据应该存储在finger表中的节点上
-        for index in (0..<finger.count-1).reversed(){
-            if hashKey <= finger[index]{
-                self.requestID = requestID
-                ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false, requestID: requestID)
+        
+        //存储在指针表中的节点中
+        for index in (1..<finger.count).reversed(){
+            if hashKey <= finger[index] && hashKey > finger[index-1]{
+                if finger[index] == self.nodeNum{
+                    _ = insert(key: key, value: value, nodeNum: self.nodeNum)
+                }else{
+                    self.requestID = requestID
+                    ring.insert(key: key, value: value, nodeName: "", nodeNum: finger[index], isFromVirtualNode: false, requestID: requestID)
+                }
+                break
             }
         }
         return -1
@@ -86,7 +99,7 @@ class Node: SuperNode{
     
     //查找k下的v--打印&删除
     override func queryDataPD(key: String, hashKey: Int , isDelete: Bool, requestID: String) -> (Int,Bool) {
-        //NSLog("\(nodeName)+\(key)")
+        NSLog("\(nodeName)+\(key)")
         if query(key: key, hashKey: hashKey, isDelete: isDelete) {return(0,true)}
         if requestID == self.requestID{
             print("没有找到数据🤷‍♂️，k:\(key),\(nodeName)")
@@ -94,14 +107,14 @@ class Node: SuperNode{
         }
         
         let hashKey = key.consistentHash()
-        if hashKey > finger[finger.count-1]{
+        if hashKey > finger[finger.count-1] || hashKey < finger[0]{
             self.requestID = requestID
             ring.queryDataPD(key: key, nodeName: "", hashKey: finger.last!, isDelete: isDelete, requestID: requestID)
             return (0,true)
         }
         
-        for index in (0..<finger.count-1).reversed(){
-            if hashKey < finger[index]{
+        for index in (0..<finger.count).reversed(){
+            if hashKey <= finger[index] && hashKey > finger[index-1]{
                 self.requestID = requestID
                 ring.queryDataPD(key: key, nodeName: "", hashKey: finger[index], isDelete: isDelete, requestID: requestID)
                 return (0,true)
@@ -153,9 +166,8 @@ class Node: SuperNode{
         return false
     }
     
-    //计时器刷新
+    //计时器刷新 - 未使用
     func freeRequest(key: String) {
-        
         self.requestID = key
         let queue = DispatchQueue(label: "consistentHash.mclarenyang", attributes: .concurrent)
         queue.async {
@@ -163,18 +175,6 @@ class Node: SuperNode{
             self.requestID = String(Int(arc4random()))
         }
         sleep(2)
-        
-//        var timerCount = 0
-//        self.timer = Timer.scheduledTimer(withTimeInterval: 0.01, repeats: true, block: {
-//            _ in
-//            print(timerCount)
-//            timerCount += 1
-//            if timerCount == 2{
-//                self.key = String(Int(arc4random()))
-//                self.timer.invalidate()
-//            }
-//        })
-//        timer.fire()
     }
     
     //涉及节点删除后的数据重新分配
@@ -184,7 +184,6 @@ class Node: SuperNode{
             return
         }
         
-        //
         self.ifWillBeDelete = true
         
         if nodeNum == self.nodeNum{
@@ -212,9 +211,11 @@ class Node: SuperNode{
     
     //refresh后的数据更新
     func popRedundantData(VirtualNodeNum: Int){
-        for index in Int(storageCount/2)..<storageCount{
+        for index in (Int(storageCount/2)..<storageCount).reversed(){
             let dataItem = storage[index]
             ring.insert(key: dataItem.key, value: dataItem.value, nodeName:"", nodeNum: VirtualNodeNum, isFromVirtualNode: false, requestID: String(Int(arc4random())))
+            //负载均衡掉的数据删除
+            self.storage.remove(at: index)
         }
     }
 }
