@@ -8,7 +8,7 @@ English | [简体中文](https://github.com/Mclarenyang/ConsistentHash/blob/mast
 ---
 &emsp; This project is an implementation of the simulation consistency hash ring (chord ring). There are already more detailed comments in the code. You can directly refer to the code structure and architecture description for comparison. It is recommended to understand the consistency hash and chord ring before this. , see [here](https://en.wikipedia.org/wiki/Chord_(peer-to-peer)) for more details.
 
-&emsp;If you find any bugs, or if you want to complete the unfinished work below, you are welcome to submit a [Issue]() or [Fork]() code.🙋🙋‍♂️
+&emsp;If you find any bugs, or if you want to complete the unfinished work below, you are welcome to submit a Issue or Fork() code.🙋🙋‍♂️
 
 ## Feature Completion
 ᕕ( ᐛ )ᕗ
@@ -27,7 +27,7 @@ Here are some ideas for implementing points that have not yet been completed:
 - Automated load balancing: Only define a threshold parameter in the node class, and call the semi-automatic load balancing method that has been implemented when the storage amount reaches the parameter. At the same time, the threshold parameters can be flexibly configured according to the performance of the nodes, making the simulation implementation more realistic.
 - Node multi-threaded task: On the basis of the existing version, the related task method is opened at the time of execution, the thread flag is set to requestID, and the requestID member variable in the node class is changed to the array storage.
 
-## 代码结构
+## Code structure
 ```
 ConsistentHash
 │   README.md
