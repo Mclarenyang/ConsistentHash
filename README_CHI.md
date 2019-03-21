@@ -1,5 +1,8 @@
 # ConsistentHash
-Chord consistent hashing ring by Swift 4.2
+![Xcode 10.0+](https://img.shields.io/badge/Xcode-10.0%2B-blue.svg)
+![Swift 4.2+](https://img.shields.io/badge/Swift-4.2%2B-orange.svg)
+
+[English](https://github.com/Mclarenyang/ConsistentHash/blob/master/README.md) | 简体中文
 
 ## 概述
 ---
