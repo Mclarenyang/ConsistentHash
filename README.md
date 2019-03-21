@@ -1,38 +1,42 @@
 # ConsistentHash
-Chord consistent hashing ring by Swift 4.2
+![Xcode 10.0+](https://img.shields.io/badge/Xcode-10.0%2B-blue.svg)
+![Swift 4.2+](https://img.shields.io/badge/Swift-4.2%2B-orange.svg)
 
-## 概述
+English | [简体中文](https://github.com/Mclarenyang/ConsistentHash/blob/master/README_CHI.md)
+
+## Introduction
 ---
-&emsp;此 project 为模拟一致性哈希环（chord环）的实现，代码中已经有较为详细的注释，可以直接参看代码结构及架构说明对照理解，同时建议在此之前先理解一致性哈希及 chord 环，详见[文档](https://github.com/dmclNewbee302/DMCL-2018)。
+&emsp; This project is an implementation of the simulation consistency hash ring (chord ring). There are already more detailed comments in the code. You can directly refer to the code structure and architecture description for comparison. It is recommended to understand the consistency hash and chord ring before this. , see [here](https://en.wikipedia.org/wiki/Chord_(peer-to-peer)) for more details.
 
-&emsp;如果发现实现中的 bug，或者想要完成下面未完成的工作，欢迎提交 Issue 或 Fork 代码。🙋🙋‍♂️
+&emsp;If you find any bugs, or if you want to complete the unfinished work below, you are welcome to submit a [Issue]() or [Fork]() code.🙋🙋‍♂️
 
-## 完成情况
+## Feature Completion
 ᕕ( ᐛ )ᕗ
-- [x] 真实节点的增删
-- [x] 数据增删查
-- [x] 删除节点后的数据分发
-- [x] chord 环指针表
-- [x] 虚拟节点版本（半自动负载均衡）
+- [x] Additions and deletions of real nodes
+- [x] Data addition and deletion
+- [x] Data distribution after deleting a node
+- [x] Chord ring pointer table
+- [x] Virtual node version (semi-automatic load balancing)
 
 ToDo
-- [ ] 自动化负载均衡
-- [ ] 节点多线程任务
-- [ ] 可视化与交互
+- [ ] Automated load balancing
+- [ ] Node multi-threaded task
+- [ ] Visualization and interaction
 
-这里提供一些还未完成的点的实现思路：
-- 自动化负载均衡：只用在节点类中定义一个阈值参数，当存储量达到参数时候调用已经实现的半自动的负载均衡方法就行。同时阈值参数还能够根据节点的性能灵活配置，使模拟实现更加贴近现实。
-- 节点多线程任务：在现有版本的基础上将相关任务方法在执行的时候开一个线程，线程标示设定为 requestID ，节点类中的 requestID 成员变量改用数组存储。
+Here are some ideas for implementing points that have not yet been completed:
+- Automated load balancing: Only define a threshold parameter in the node class, and call the semi-automatic load balancing method that has been implemented when the storage amount reaches the parameter. At the same time, the threshold parameters can be flexibly configured according to the performance of the nodes, making the simulation implementation more realistic.
+- Node multi-threaded task: On the basis of the existing version, the related task method is opened at the time of execution, the thread flag is set to requestID, and the requestID member variable in the node class is changed to the array storage.
 
 ## 代码结构
 ```
 ConsistentHash
 │   README.md
-│   ConsistentHash.xcodeproj    //xcode 项目文件
+│   ConsistentHash.xcodeproj    //Xcode project file
 └───ConsistentHash
-    │   main.swift              //测试文件
-    │   ring.swift              //Ring 类、String MD5 加密扩展
-    │   node.swift              //节点父类、真实节点类
-    │   node_virtual.swift      //虚拟节点类
+    │   main.swift              //Test file
+    │   ring.swift              //Ring class、String MD5 extension
+    │   node.swift              //Node superClass、real node class
+    │   node_virtual.swift      //Virtual node class
     └───*
 ```
+
