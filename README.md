@@ -2,7 +2,7 @@
 ![Xcode 10.0+](https://img.shields.io/badge/Xcode-10.0%2B-blue.svg)
 ![Swift 4.2+](https://img.shields.io/badge/Swift-4.2%2B-orange.svg)
 
-English | [简体中文](https://github.com/Mclarenyang/ConsistentHash/blob/master/README_CHI.md)
+English | [简体中文](./README_CHI.md)
 
 ## Introduction
 ---
