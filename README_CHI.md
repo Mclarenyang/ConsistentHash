@@ -5,7 +5,6 @@
 [English](https://github.com/Mclarenyang/ConsistentHash/blob/master/README.md) | 简体中文
 
 ## 概述
----
 &emsp;此 project 为模拟一致性哈希环（chord环）的实现，代码中已经有较为详细的注释，可以直接参看代码结构及架构说明对照理解，同时建议在此之前先理解一致性哈希及 chord 环，详见[文档](https://github.com/dmclNewbee302/DMCL-2018)。
 
 &emsp;如果发现实现中的 bug，或者想要完成下面未完成的工作，欢迎提交 Issue 或 Fork 代码。🙋🙋‍♂️
