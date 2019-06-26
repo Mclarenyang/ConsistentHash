@@ -5,7 +5,7 @@
 English | [简体中文](./README_CHI.md)
 
 ## Introduction
-&emsp; This project is an implementation of the simulation consistency hash ring (chord ring). There are already more detailed comments in the code. You can directly refer to the code structure and architecture description for comparison. It is recommended to understand the consistency hash and chord ring before this. , see [here](https://en.wikipedia.org/wiki/Chord_(peer-to-peer)) for more details.
+&emsp; This project is an implementation of the simulation consistency hash ring (chord ring). There are already more detailed comments in the code. You can directly refer to the code structure and architecture description for comparison. It is recommended to understand the consistency hash and chord ring before this, see [here](https://en.wikipedia.org/wiki/Chord_(peer-to-peer)) for more details.
 
 &emsp;If you find any bugs, or if you want to complete the unfinished work below, you are welcome to submit a Issue or Fork code.🙋🙋‍♂️
 
