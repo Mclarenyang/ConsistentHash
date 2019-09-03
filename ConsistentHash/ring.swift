@@ -10,31 +10,31 @@ import Foundation
 import CommonCrypto
 
 class Ring {
-    
+
     static let shared = Ring()
     private init(){}
-    
+
     //哈希环
     private var ring = [SuperNode]()
-    
+
     //哈希环的大小，2的power幂
     public var power = 0
-    
+
     //-----用户接口-----//
     //添加真实节点
     func addRealNode(nodeName: String) -> Int {
-        
+
         let nodeHash = nodeName.consistentHash()
         let newNode = Node()
         newNode.nodeName = nodeName
         newNode.nodeNum = nodeHash
         newNode.ring = Ring.shared
-        
+
         if ring.count == 0{
             ring.append(newNode)
             return nodeHash
         }
-        
+
         for index in 0..<ring.count {
             if nodeHash <= ring[index].nodeNum ||
                 index+1 == ring.count{
@@ -45,7 +45,7 @@ class Ring {
         }
         return -1
     }
-    
+
     //删除节点
     func deleteNode(nodeName: String, isRealNode: Bool) -> Bool {
         if ring.isEmpty {
@@ -59,7 +59,7 @@ class Ring {
                     //删除真实节点连接的所有虚拟节点
                     deleteAllVirtualNodeforRealNode(realNode: realNode)
                     _ = realNode.popData(nodeNum: nodeName.consistentHash())
-                    
+
                     ring.remove(at: index)
                     print("删除节点成功:\(nodeName)")
                     refreshFinger()
@@ -80,7 +80,7 @@ class Ring {
         }
         return false
     }
-    
+
     //删除真实节点下的所有虚拟节点
     func deleteAllVirtualNodeforRealNode(realNode: Node){
         for virtualNodeNum in realNode.virtualNode{
@@ -91,7 +91,7 @@ class Ring {
             }
         }
     }
-    
+
     //负载均衡 -> 自动添加虚拟节点
     //todo
     func rebBalance() {
@@ -102,7 +102,7 @@ class Ring {
          * 4 将虚拟节点链接到存储最小的真实节点上
          * 5 触发更新指针表/触发数据重新分配
          */
-        
+
         var max = (0,Node())
         var min = (1<<32,Node())
         var maxNodeIndex = 0
@@ -114,7 +114,7 @@ class Ring {
             if max.0 < realNode.storageCount{
                 max = (realNode.storageCount, realNode)
                 maxNodeIndex = index
-                
+
             }
             if min.0 > realNode.storageCount{
                 min = (realNode.storageCount, realNode)
@@ -138,7 +138,7 @@ class Ring {
         refreshFinger()
         max.1.popRedundantData(VirtualNodeNum: virtualNode.nodeNum)
     }
-    
+
     //打印现在的节点状态
     func printNode() {
         if ring.isEmpty {
@@ -153,7 +153,7 @@ class Ring {
             print(nodeStr)
         }
     }
-    
+
     //打印节点数据
     func printData(nodeName: String, nodeNum: Int, virtualNodeNum:Int, isFromVirtualNode: Bool){
         for node in ring {
@@ -166,7 +166,7 @@ class Ring {
             }
         }
     }
-    
+
     //打印虚拟节点数据
     func printVirtualData(nodeName: String){
         for node in ring {
@@ -175,14 +175,14 @@ class Ring {
             }
         }
     }
-    
-    
+
+
     //-----网络层-----//
     //更新finger指针
     private func refreshFinger() {
         //如果当前只有一个节点
         if ring.count == 1{return}
-        
+
         for index in 0..<ring.count{
             var finger = [Int]()
             //先将前驱加入
@@ -191,7 +191,7 @@ class Ring {
             }else{
                 finger.append(ring[index-1].nodeNum)
             }
-            
+
             //如果现在的节点数小于幂的量-->没有必要建立跳跃的指针表
             if ring.count+1 <= power{
                 for count in 0..<ring.count{
@@ -206,7 +206,7 @@ class Ring {
                 ring[index].finger = finger
                 continue
             }
-            
+
             let nowNodeNum = ring[index].nodeNum
             for row in 0..<power{
                 var 🎯 = nowNodeNum + (1<<row)
@@ -219,12 +219,12 @@ class Ring {
                     }
                 }
             }
-            
+
             ring[index].finger.removeAll()
             ring[index].finger = finger
         }
     }
-    
+
     //data_数据插入，兼容用户接口
     func insert(key: String , value: String, nodeName: String, nodeNum:Int, isFromVirtualNode: Bool, requestID: String){
         var nowRequestID = requestID
@@ -244,7 +244,7 @@ class Ring {
         }
         print("没有找到你请求的节点🤨-nodeName:\(nodeName) nodeNum:\(nodeNum)")
     }
-    
+
     //data_数据查找--删除，兼容用户接口
     func queryDataPD(key: String, nodeName: String, hashKey: Int, isDelete: Bool, requestID: String){
         var nowRequestID = requestID
@@ -256,12 +256,12 @@ class Ring {
             if ring[index].nodeName != nodeName && hashKey < 0 {
                 continue
             }
-            
+
             if ring[index].nodeName == nodeName {
                 _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete, requestID: nowRequestID)
                 return
             }
-            
+
             if ring[index].nodeNum == hashKey && hashKey > 0{
                 _ = ring[index].queryDataPD(key: key, hashKey: hashKey, isDelete: isDelete, requestID: nowRequestID)
                 return
